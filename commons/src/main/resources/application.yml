@@ -1,0 +1,5 @@
+jwt:
+    header: Authorization
+    secret: YOUR_JWT_SECRET_HERE
+    expiration: 6048000
+hostname: http://localhost:3000

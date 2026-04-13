@@ -1,0 +1,73 @@
+import React, { FC, ReactElement } from "react";
+import { Divider, Link as MuiLink, Typography } from "@material-ui/core";
+import { useTranslation } from "react-i18next";
+
+import MutedAccountItem from "./MutedAccountItem";
+import Spinner from "../../../../../components/Spinner/Spinner";
+import { useGlobalStyles } from "../../../../../util/globalClasses";
+import { withDocumentTitle } from "../../../../../hoc/withDocumentTitle";
+import { TWITTER_MUTE } from "../../../../../constants/url-constants";
+import InfiniteScrollWrapper from "../../../../../components/InfiniteScrollWrapper/InfiniteScrollWrapper";
+import { useMutedAccounts } from "./useMutedAccounts";
+
+const MutedAccounts: FC = (): ReactElement => {
+    const globalClasses = useGlobalStyles({});
+    const { t } = useTranslation();
+    const {
+        mutedUsers,
+        isMutedUsersLoading,
+        isMutedUsersLoaded,
+        mutedUsersPagesCount,
+        loadMutedUsers,
+    } = useMutedAccounts();
+
+    return (
+        <InfiniteScrollWrapper
+            dataLength={mutedUsers.length}
+            pagesCount={mutedUsersPagesCount}
+            loadItems={loadMutedUsers}
+        >
+            <div className={globalClasses.itemInfoWrapper}>
+                <Typography variant="subtitle2" component="div">
+                    {t("MUTED_ACCOUNTS_DESCRIPTION", {
+                        defaultValue: "Here’s everyone you muted. You can add or remove them from this list."
+                    })}
+                    {" "}
+                    <MuiLink href={TWITTER_MUTE} variant="subtitle2" target="_blank" rel="noopener">
+                        {t("LEARN_MORE", { defaultValue: "Learn more" })}
+                    </MuiLink>
+                </Typography>
+            </div>
+            <Divider />
+            {(isMutedUsersLoading && !mutedUsers.length) ? (
+                <Spinner />
+            ) : (
+                (isMutedUsersLoaded && !mutedUsers.length) ? (
+                    <div className={globalClasses.infoText}>
+                        <Typography variant="h4" component="div">
+                            {t("YOU_ARENT_MUTING_ANYONE", { defaultValue: "You aren’t muting anyone" })}
+                        </Typography>
+                        <Typography variant="subtitle1" component="div">
+                            {t("WHEN_YOU_MUTE_ACCOUNTS", {
+                                defaultValue: "When you mute accounts, you won’t see their Tweets in your timeline."
+                            })}
+                            {" "}
+                            <MuiLink href={TWITTER_MUTE} variant="subtitle2" target="_blank" rel="noopener">
+                                {t("LEARN_MORE", { defaultValue: "Learn more" })}
+                            </MuiLink>
+                        </Typography>
+                    </div>
+                ) : (
+                    <>
+                        {mutedUsers.map((mutedUser) => (
+                            <MutedAccountItem key={mutedUser.id} mutedUser={mutedUser} />
+                        ))}
+                        {isMutedUsersLoading && <Spinner />}
+                    </>
+                )
+            )}
+        </InfiniteScrollWrapper>
+    );
+};
+
+export default withDocumentTitle(MutedAccounts)("Muted accounts");
