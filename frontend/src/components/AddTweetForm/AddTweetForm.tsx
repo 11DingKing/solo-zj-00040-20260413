@@ -37,6 +37,7 @@ import GifImage from "../GifImage/GifImage";
 import PollIconButton from "./PollIconButton/PollIconButton";
 import TextCountProgress from "./TextCountProgress/TextCountProgress";
 import { MAX_TEXT_LENGTH } from "../../constants/common-constants";
+import { isTweetTooLong } from "../../util/tweet-text-counter";
 import {
     selectGif,
     selectImageDescription,
@@ -68,21 +69,19 @@ export interface ImageObj {
     file: File;
 }
 
-const AddTweetForm: FC<AddTweetFormProps> = (
-    {
-        unsentTweet,
-        quoteTweet,
-        tweetList,
-        maxRows,
-        minRows,
-        tweetId,
-        title,
-        buttonName,
-        addressedUsername,
-        addressedId,
-        onCloseModal
-    }
-): ReactElement => {
+const AddTweetForm: FC<AddTweetFormProps> = ({
+    unsentTweet,
+    quoteTweet,
+    tweetList,
+    maxRows,
+    minRows,
+    tweetId,
+    title,
+    buttonName,
+    addressedUsername,
+    addressedId,
+    onCloseModal
+}): ReactElement => {
     const classes = useAddTweetFormStyles();
     const dispatch = useDispatch();
     const params = useParams<{ userId: string }>();
@@ -116,8 +115,8 @@ const AddTweetForm: FC<AddTweetFormProps> = (
 
         if (visiblePoll) {
             const { day, hour, minute, choice1, choice2, choice3, choice4 } = pollData;
-            const pollDateTime = (day * 1440) + (hour * 60) + minute;
-            const choices = [choice1, choice2, choice3, choice4].filter(item => item);
+            const pollDateTime = day * 1440 + hour * 60 + minute;
+            const choices = [choice1, choice2, choice3, choice4].filter((item) => item);
             dispatch(addPoll({ ...tweet, pollDateTime, choices }));
         } else if (scheduledDate !== null && unsentTweet === undefined) {
             dispatch(addScheduledTweet({ ...tweet, scheduledDate }));
@@ -130,9 +129,12 @@ const AddTweetForm: FC<AddTweetFormProps> = (
 
         if (scheduledDate) {
             const date = formatScheduleDate(scheduledDate);
-            tweetPostProcessing(t("YOUR_SCHEDULED_TWEET_WAS_SENT", {
-                date, defaultValue: `Your Tweet will be sent on ${date}`
-            }));
+            tweetPostProcessing(
+                t("YOUR_SCHEDULED_TWEET_WAS_SENT", {
+                    date,
+                    defaultValue: `Your Tweet will be sent on ${date}`
+                })
+            );
         } else {
             tweetPostProcessing();
         }
@@ -146,13 +148,15 @@ const AddTweetForm: FC<AddTweetFormProps> = (
 
     const handleClickReplyTweet = async (): Promise<void> => {
         const tweet = await tweetPreProcessing();
-        dispatch(fetchReplyTweet({
-            ...tweet,
-            tweetId: tweetId!,
-            userId: params.userId,
-            addressedUsername: addressedUsername!,
-            addressedId: addressedId!
-        }));
+        dispatch(
+            fetchReplyTweet({
+                ...tweet,
+                tweetId: tweetId!,
+                userId: params.userId,
+                addressedUsername: addressedUsername!,
+                addressedId: addressedId!
+            })
+        );
         tweetPostProcessing();
     };
 
@@ -193,9 +197,7 @@ const AddTweetForm: FC<AddTweetFormProps> = (
                     <TextareaAutosize
                         onChange={handleChangeText}
                         className={classes.contentTextarea}
-                        placeholder={visiblePoll
-                            ? t("ASK_A_QUESTION", { defaultValue: "Ask a question..." })
-                            : title}
+                        placeholder={visiblePoll ? t("ASK_A_QUESTION", { defaultValue: "Ask a question..." }) : title}
                         value={text}
                         maxRows={maxRows}
                         minRows={images.length !== 0 ? 1 : minRows}
@@ -221,14 +223,21 @@ const AddTweetForm: FC<AddTweetFormProps> = (
                 <div className={classes.footerAddForm}>
                     <TextCountProgress text={text} />
                     <Button
-                        onClick={(buttonName === "Reply") ? handleClickReplyTweet :
-                            (quoteTweet !== undefined ? handleClickQuoteTweet : handleClickAddTweet)}
+                        onClick={
+                            buttonName === "Reply"
+                                ? handleClickReplyTweet
+                                : quoteTweet !== undefined
+                                  ? handleClickQuoteTweet
+                                  : handleClickAddTweet
+                        }
                         disabled={
-                            visiblePoll ? (
-                                !pollData.choice1 || !pollData.choice2 || !text || text.length >= MAX_TEXT_LENGTH
-                            ) : (
-                                !gif && (!text || text.length >= MAX_TEXT_LENGTH)
-                            )}
+                            visiblePoll
+                                ? !pollData.choice1 ||
+                                  !pollData.choice2 ||
+                                  !text ||
+                                  isTweetTooLong(text, MAX_TEXT_LENGTH)
+                                : !gif && (!text || isTweetTooLong(text, MAX_TEXT_LENGTH))
+                        }
                         color="primary"
                         variant="contained"
                     >

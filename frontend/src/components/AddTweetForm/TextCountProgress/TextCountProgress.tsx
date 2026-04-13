@@ -3,6 +3,7 @@ import CircularProgress from "@material-ui/core/CircularProgress";
 
 import { MAX_TEXT_LENGTH } from "../../../constants/common-constants";
 import { useTextCountProgressStyles } from "./TextCountProgressStyles";
+import { calculateTweetLength, getTweetLengthPercent } from "../../../util/tweet-text-counter";
 
 interface TextCountProgressProps {
     text: string;
@@ -10,8 +11,9 @@ interface TextCountProgressProps {
 
 const TextCountProgress: FC<TextCountProgressProps> = memo(({ text }): ReactElement | null => {
     const classes = useTextCountProgressStyles();
-    const textLimitPercent = Math.round((text.length / MAX_TEXT_LENGTH) * 100);
-    const textCount = MAX_TEXT_LENGTH - text.length;
+    const currentLength = calculateTweetLength(text);
+    const textLimitPercent = getTweetLengthPercent(text, MAX_TEXT_LENGTH);
+    const textCount = MAX_TEXT_LENGTH - currentLength;
 
     if (!text) {
         return null;
@@ -19,13 +21,11 @@ const TextCountProgress: FC<TextCountProgressProps> = memo(({ text }): ReactElem
 
     return (
         <>
-            <span id="textCount">
-                {textCount}
-            </span>
+            <span id="textCount">{textCount}</span>
             <div className={classes.footerAddFormCircleProgress}>
                 <CircularProgress
-                    className={text.length >= MAX_TEXT_LENGTH ? classes.progressColor : undefined}
-                    value={text.length >= MAX_TEXT_LENGTH ? 100 : textLimitPercent}
+                    className={currentLength >= MAX_TEXT_LENGTH ? classes.progressColor : undefined}
+                    value={currentLength >= MAX_TEXT_LENGTH ? 100 : textLimitPercent}
                     variant="determinate"
                     size={20}
                     thickness={5}
