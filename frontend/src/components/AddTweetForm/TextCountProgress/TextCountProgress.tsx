@@ -9,15 +9,11 @@ interface TextCountProgressProps {
     text: string;
 }
 
-const TextCountProgress: FC<TextCountProgressProps> = memo(({ text }): ReactElement | null => {
+const TextCountProgress: FC<TextCountProgressProps> = memo(({ text }): ReactElement => {
     const classes = useTextCountProgressStyles();
     const currentLength = calculateTweetLength(text);
     const textLimitPercent = getTweetLengthPercent(text, MAX_TEXT_LENGTH);
     const textCount = MAX_TEXT_LENGTH - currentLength;
-
-    if (!text) {
-        return null;
-    }
 
     return (
         <>
